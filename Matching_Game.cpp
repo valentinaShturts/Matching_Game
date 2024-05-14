@@ -153,37 +153,37 @@ struct Achievements
 	bool result;
 };
 //увеличение массива достижений на один
-Achievements* AddNewAchievement(Achievements*& results, int& size, Achievements current_game)
+Achievements* AddNewAchievement(Achievements*& results, int* size, Achievements current_game)
 {
-	int newSize = 1 + size;
+	int newSize = 1 + *size;
 	Achievements* newResults = new Achievements[newSize];
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < *size; i++)
 	{
 		newResults[i] = results[i];
 	}
 	newResults[newSize - 1] = current_game;
 	delete[]  results;
-	size = newSize;
+	*size = newSize;
 	return newResults;
 }
 
 //вывод результатов после окончания игры
-void PrintResults(Achievements* results, int size)
+void PrintResults(Achievements* results, int* size)
 {
-	cout << "Elapsed time: " << results[size - 1].min_duration << "." << results[size - 1].sec_duration << " min" << endl << endl;
+	cout << "Elapsed time: " << results[(*size) - 1].min_duration << "." << results[(*size) - 1].sec_duration << " min" << endl << endl;
 }
 
 //вывод всех результатов
-void PrintAllResults(Achievements* results, int size)
+void PrintAllResults(Achievements* results, int* size)
 {
 	cout << " ID \t Game mode \t Board size \t Elapsed time \t Result" << endl << endl;
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < *size; i++)
 	{
 		cout << results[i].id << ".  ";
 		if (results[i].game_mode == 1) cout << "  Single-user ";
 		else if (results[i].game_mode == 2) cout << "Computer/Player";
 		cout << "   " << results[i].size_board << "x" << results[i].size_board;
-		cout << "   " << results[size - 1].min_duration << "." << results[size - 1].sec_duration << " min";
+		cout << "   " << results[(*size) - 1].min_duration << "." << results[(*size) - 1].sec_duration << " min";
 		//if (results[i].result == 1) cout << "  Won";
 		//else if (results[i].result == 0) cout << "  Deafeat";
 		cout << endl;
@@ -222,7 +222,7 @@ void ConvertTime(double totalSeconds, int& minutes, int& seconds)
 #pragma endregion
 
 //ввод индексов нужной карты игроком
-void EnterIndex(char** cards,int size, int& indexRow, int& indexCol)
+void EnterIndex(char** cards, int size, int& indexRow, int& indexCol)
 {
 	do
 	{
@@ -230,7 +230,7 @@ void EnterIndex(char** cards,int size, int& indexRow, int& indexCol)
 		cin >> indexRow;
 		cout << "Enter col number of card: ";
 		cin >> indexCol;
-	} while (indexRow > size || indexRow<1 || indexCol>size || indexCol < 1 || cards[indexRow-1][indexCol-1] != (char)219);
+	} while (indexRow > size || indexRow<1 || indexCol>size || indexCol < 1 || cards[indexRow - 1][indexCol - 1] != (char)219);
 }
 
 //рандомный выбор карты компом
@@ -277,7 +277,7 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch)
 	system("cls");
 	cards[indexRow2 - 1][indexCol2 - 1] = symbols[indexRow2 - 1][indexCol2 - 1];
 	ShowCardBoard(cards, size);
-	
+
 	if (cards[indexRow1 - 1][indexCol1 - 1] == cards[indexRow2 - 1][indexCol2 - 1])
 	{
 		cards[indexRow1 - 1][indexCol1 - 1] = ' ';
@@ -363,16 +363,16 @@ void StartTwoPlayerGame(char** cards, char** symbols, int size)
 				if (IsEndOfGame(cards, size) == 1) isMatch = 0;
 			} while (isMatch);
 		}
-		
+
 	} while (IsEndOfGame(cards, size) == 0);
-	
+
 }
 
 //старт игры
-void StartGame(Achievements* results, int games_number)
+void StartGame(Achievements* results, int* games_number)
 {
 	Achievements current_game;
-	current_game.id = games_number++;
+	current_game.id = (*games_number) + 1;
 
 	int players = 1;
 	int* number_of_players = &players;
@@ -399,7 +399,7 @@ void StartGame(Achievements* results, int games_number)
 	FillCards(symbols, size);
 	MixSymbols(symbols, size);
 
-	
+
 	time_point<steady_clock> startTime;
 	StartTimer(startTime);
 
@@ -428,14 +428,13 @@ void StartGame(Achievements* results, int games_number)
 	system("cls");
 
 	results = AddNewAchievement(results, games_number, current_game);
-	
+
 	PrintAllResults(results, games_number);
 	WaitForSpacebar();
-
 }
 
 //меню
-void Menu(Achievements* results, int size)
+void Menu(Achievements* results, int* size)
 {
 	cout << "    Welcome to the Matching Game!" << endl << endl;
 	cout << "\t1. Start game" << endl << "\t2. View achievements" << endl << "\t3. Exit" << endl << endl;
@@ -465,7 +464,7 @@ void Menu(Achievements* results, int size)
 		exit(0);
 	}
 
-	
+
 }
 
 int main()
@@ -473,12 +472,12 @@ int main()
 	int size = 0;
 	int* games_number = &size;
 	Achievements* achievements = new Achievements[size];
-	do 
+	do
 	{
 		system("cls");
-		Menu(achievements, size); 
+		Menu(achievements, games_number);
 	} while (true);
-	
+
 	delete[] achievements;
 	return 0;
 }

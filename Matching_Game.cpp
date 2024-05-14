@@ -5,8 +5,11 @@
 #include <chrono>
 #include <conio.h> // Для использования _kbhit() и _getch()
 #include <thread>
+#include <fstream>
+#include <string>
 
 using namespace std;
+
 using namespace std::chrono;
 
 #pragma region Cards
@@ -152,49 +155,65 @@ struct Achievements
 	int matches_number_pc;
 	bool result;
 };
-//увеличение массива достижений на один
-Achievements* AddNewAchievement(Achievements*& results, int* size, Achievements current_game)
+
+void WriteGameResultToFile(const Achievements& result)
 {
-	int newSize = 1 + *size;
-	Achievements* newResults = new Achievements[newSize];
-	for (int i = 0; i < *size; i++)
+	ofstream file("game_results.txt", ios::app); // Открытие файла для записи (добавление в конец файла)
+	if (file.is_open()) 
 	{
-		newResults[i] = results[i];
+		file << result.id;
+		file << " ";
+		if (result.game_mode == 1) file <<  " Single-user " ;
+		else if (result.game_mode == 2) file <<  " Computer/Player ";
+		file << " ";
+		file  << result.size_board <<"x"<< result.size_board;
+		file << " ";
+		file <<  result.min_duration << "." << result.sec_duration;
+		//file << "Victory: " << (result.result ? "Yes" : "No") << endl;
+		file << endl;
+		file.close();
 	}
-	newResults[newSize - 1] = current_game;
-	delete[]  results;
-	*size = newSize;
-	return newResults;
+	else {
+		cout << "Error: Unable to open file for writing." << endl;
+	}
+}
+
+void ViewGameResultsFromFile() 
+{
+	cout << " ID \t  Game mode  Board size  Elapsed time  Result" << endl << endl;
+	ifstream file("game_results.txt"); // Открытие файла для чтения
+	if (file.is_open()) 
+	{
+		string word;
+		while (file >> word) 
+		{
+			cout << word << "      ";
+		}
+		file.close();
+	}
+	else {
+		cout << "Error: Unable to open file for reading." << endl;
+	}
+}
+
+void ClearFileContents(const string& filename) 
+{
+	ofstream file(filename); // Открытие файла для записи (это удалит его содержимое)
+	file.close();
 }
 
 //вывод результатов после окончания игры
-void PrintResults(Achievements* results, int* size)
+void PrintResults(Achievements result)
 {
-	cout << "Elapsed time: " << results[(*size) - 1].min_duration << "." << results[(*size) - 1].sec_duration << " min" << endl << endl;
+	cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
 }
 
-//вывод всех результатов
-void PrintAllResults(Achievements* results, int* size)
-{
-	cout << " ID \t Game mode \t Board size \t Elapsed time \t Result" << endl << endl;
-	for (int i = 0; i < *size; i++)
-	{
-		cout << results[i].id << ".  ";
-		if (results[i].game_mode == 1) cout << "  Single-user ";
-		else if (results[i].game_mode == 2) cout << "Computer/Player";
-		cout << "   " << results[i].size_board << "x" << results[i].size_board;
-		cout << "   " << results[(*size) - 1].min_duration << "." << results[(*size) - 1].sec_duration << " min";
-		//if (results[i].result == 1) cout << "  Won";
-		//else if (results[i].result == 0) cout << "  Deafeat";
-		cout << endl;
-	}
-}
 #pragma endregion
 
 //ожидание нажатия пробела
 void WaitForSpacebar()
 {
-	std::cout << "Enter Space to continue... ";
+	std::cout <<endl<< "Enter Space to continue... ";
 	while (_getch() != ' '); // Ожидаем нажатия клавиши пробела
 }
 
@@ -369,10 +388,10 @@ void StartTwoPlayerGame(char** cards, char** symbols, int size)
 }
 
 //старт игры
-void StartGame(Achievements* results, int* games_number)
+void StartGame(int& counter)
 {
 	Achievements current_game;
-	current_game.id = (*games_number) + 1;
+	current_game.id = counter;
 
 	int players = 1;
 	int* number_of_players = &players;
@@ -422,19 +441,20 @@ void StartGame(Achievements* results, int* games_number)
 	current_game.sec_duration = seconds;
 
 	WaitForSpacebar();
+	WriteGameResultToFile(current_game);
 
 	DeleteBoardArr(cards, size);
 	DeleteSymbolsArr(symbols, size);
 	system("cls");
 
-	results = AddNewAchievement(results, games_number, current_game);
+	
 
-	PrintAllResults(results, games_number);
+	PrintResults(current_game);
 	WaitForSpacebar();
 }
 
 //меню
-void Menu(Achievements* results, int* size)
+void Menu(int& counter)
 {
 	cout << "    Welcome to the Matching Game!" << endl << endl;
 	cout << "\t1. Start game" << endl << "\t2. View achievements" << endl << "\t3. Exit" << endl << endl;
@@ -449,13 +469,14 @@ void Menu(Achievements* results, int* size)
 
 	if (choice == 1)
 	{
-		StartGame( results, size);
+		counter++;
+		StartGame( counter);
 	}
 
 	else if (choice == 2)
 	{
 		system("cls");
-		PrintAllResults(results, size);
+		ViewGameResultsFromFile();
 		WaitForSpacebar();
 	}
 
@@ -469,15 +490,15 @@ void Menu(Achievements* results, int* size)
 
 int main()
 {
-	int size = 0;
-	int* games_number = &size;
-	Achievements* achievements = new Achievements[size];
+	ClearFileContents("game_results.txt");
+
+	int counter = 0;
 	do
 	{
 		system("cls");
-		Menu(achievements, games_number);
+		Menu(counter);
 	} while (true);
 
-	delete[] achievements;
+	
 	return 0;
 }

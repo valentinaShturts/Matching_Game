@@ -7,28 +7,54 @@
 #include <thread>
 #include <fstream>
 #include <string>
+#include <limits> // Для использования std::numeric_limits
+
+#include <windows.h>
+#ifdef max
+#undef max
+#endif
 
 using namespace std;
-
 using namespace std::chrono;
+
+
+
+void getValidatedInput(int& input)
+{
+	while (true)
+	{
+		cin >> input;
+		if (cin.fail())
+		{
+			cin.clear(); // Сбросить флаг ошибки
+			cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Игнорировать неправильный ввод
+			cout << "Invalid input. Enter again:  ";
+		}
+		else
+		{
+			cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Очистить буфер ввода
+			break;
+		}
+	}
+}
 
 #pragma region Cards
 //выбор к-ства игроков и вывод правил
 void ChooseGameMode(int* number_of_players)
 {
 	cout << "  Choose the number of players(1 or 2): ";
-	cin >> *number_of_players;
+	getValidatedInput(*number_of_players);
 	if (*number_of_players == 1) cout << "    Here the rules: " << endl << " This is a simple memory game." << endl << " You need to turn over 2 cards, if they match, you're cool." << endl << " If not, don't despair and keep playing." << endl << " The game is over when there are no more cards on the field." << endl << " Good luck!" << endl;
 	else if (*number_of_players == 2) cout << "    Here the rules: " << endl << " This is a simple memory game." << endl << " You will play with the computer. " << endl << " You need to turn over 2 cards, if they match, you're cool and continue to play." << endl << " If not, don't despair, but it's the computer's move." << endl << " The game is over when there are no more cards on the field." << endl << " The one with the most matches wins. " << endl << " Good luck!" << endl;
-	else { cout << " Enter again " << endl; ChooseGameMode(number_of_players); }
+	else { ChooseGameMode(number_of_players); }
 }
 
 //Выбор размера поля - к-ства карточек
 void ChooseSizeBoard(int* size)
 {
 	cout << "Enter size of the board (2, 4, 6, 8): ";
-	cin >> *size;
-	if (*size < 2 || *size >8 || *size % 2 != 0) { cout << " Enter again " << endl; ChooseSizeBoard(size); }
+	getValidatedInput(*size);
+	if (*size < 2 || *size >8 || *size % 2 != 0)  ChooseSizeBoard(size); 
 }
 //расспечатать карточки
 void ShowCardBoard(char** cards, int size)
@@ -144,16 +170,16 @@ void DeleteSymbolsArr(char** symbols, int size)
 //структура достижений
 struct Achievements
 {
-	int id;
-	int game_mode;
-	int size_board;
-	int min_duration;
-	int sec_duration;
-	int card_turns_pl;
-	int matches_number_pl;
-	int card_turns_pc;
-	int matches_number_pc;
-	bool result;
+	int id = 0;
+	int game_mode = 0;
+	int size_board = 0;
+	int min_duration = 0;
+	int sec_duration = 0;
+	int card_turns_pl = 0;
+	int matches_number_pl = 0;
+	int card_turns_pc = 0;
+	int matches_number_pc = 0;
+	bool result = 0;
 };
 
 void WriteGameResultToFile(const Achievements& result)
@@ -169,7 +195,8 @@ void WriteGameResultToFile(const Achievements& result)
 		file  << result.size_board <<"x"<< result.size_board;
 		file << " ";
 		file <<  result.min_duration << "." << result.sec_duration;
-		//file << "Victory: " << (result.result ? "Yes" : "No") << endl;
+		file << " ";
+		file << (result.result ? " Winner " : " Loser ") << endl;
 		file << endl;
 		file.close();
 	}
@@ -180,21 +207,23 @@ void WriteGameResultToFile(const Achievements& result)
 
 void ViewGameResultsFromFile() 
 {
-	cout << " ID \t  Game mode  Board size  Elapsed time  Result" << endl << endl;
+	cout << " ID \t Game mode \t Board size \t Elapsed time \t    Result" << endl << endl;
 	ifstream file("game_results.txt"); // Открытие файла для чтения
-	if (file.is_open()) 
+	if (file.is_open())
 	{
-		string word;
-		while (file >> word) 
+		string id, game_mode, board_size, elapsed_time, result;
+		while (file >> id >> game_mode >> board_size >> elapsed_time >> result)
 		{
-			cout << word << "      ";
+			cout <<" " << id << "    " << game_mode << "\t    " << board_size << "\t\t    " << elapsed_time << "\t    " << result << endl;
 		}
 		file.close();
 	}
-	else {
+	else
+	{
 		cout << "Error: Unable to open file for reading." << endl;
 	}
 }
+
 
 void ClearFileContents(const string& filename) 
 {
@@ -203,9 +232,27 @@ void ClearFileContents(const string& filename)
 }
 
 //вывод результатов после окончания игры
-void PrintResults(Achievements result)
+void PrintResults(Achievements& result)
 {
-	cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
+	if (result.game_mode == 2)
+	{
+		if (result.result == 1) 
+		{
+			//PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_SYNC | SND_FILENAME);
+			cout << "\tCongratulations!! You won!" << endl << endl;
+		}
+		else { cout << "\tOh..sorry. You lose)" << endl << endl; }
+		cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
+		cout << "Number of matches (You): " << result.matches_number_pl << "\t" << "(Computer): " << result.matches_number_pc << endl;
+		cout << "Card turns (You): " << result.card_turns_pl << "\t" << "(Computer): " << result.card_turns_pc << endl << endl;
+	}
+	else if (result.game_mode == 1)
+	{
+		cout << "\tWow, you won, I was already starting to doubt" << endl << endl;
+		cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
+		cout << "Number of matches (You): " << result.matches_number_pl << endl;
+		cout << "Card turns (You): " << result.card_turns_pl << endl << endl;
+	}
 }
 
 #pragma endregion
@@ -246,9 +293,9 @@ void EnterIndex(char** cards, int size, int& indexRow, int& indexCol)
 	do
 	{
 		cout << "Enter row number of card: ";
-		cin >> indexRow;
+		getValidatedInput(indexRow);
 		cout << "Enter col number of card: ";
-		cin >> indexCol;
+		getValidatedInput(indexCol);
 	} while (indexRow > size || indexRow<1 || indexCol>size || indexCol < 1 || cards[indexRow - 1][indexCol - 1] != (char)219);
 }
 
@@ -279,7 +326,7 @@ bool IsEndOfGame(char** cards, int size)
 }
 
 //ход игрока
-void PlayerMove(char** cards, char** symbols, int size, bool& isMatch)
+void PlayerMove(char** cards, char** symbols, int size, bool& isMatch, Achievements& result)
 {
 	int indexRow1, indexCol1, indexRow2, indexCol2;
 
@@ -287,6 +334,7 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch)
 	ShowCardBoard(cards, size);
 
 	EnterIndex(cards, size, indexRow1, indexCol1);
+	result.card_turns_pl++;
 
 	system("cls");
 	cards[indexRow1 - 1][indexCol1 - 1] = symbols[indexRow1 - 1][indexCol1 - 1];
@@ -297,11 +345,14 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch)
 	cards[indexRow2 - 1][indexCol2 - 1] = symbols[indexRow2 - 1][indexCol2 - 1];
 	ShowCardBoard(cards, size);
 
+	result.card_turns_pl++;
+
 	if (cards[indexRow1 - 1][indexCol1 - 1] == cards[indexRow2 - 1][indexCol2 - 1])
 	{
 		cards[indexRow1 - 1][indexCol1 - 1] = ' ';
 		cards[indexRow2 - 1][indexCol2 - 1] = ' ';
 		isMatch = 1;
+		result.matches_number_pl++;
 	}
 	else
 	{
@@ -316,7 +367,7 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch)
 }
 
 //ход компа
-void ComputerMove(char** cards, char** symbols, int size, bool& isMatch)
+void ComputerMove(char** cards, char** symbols, int size, bool& isMatch, Achievements& result)
 {
 	int indexRow1, indexCol1, indexRow2, indexCol2;
 
@@ -324,6 +375,8 @@ void ComputerMove(char** cards, char** symbols, int size, bool& isMatch)
 	ShowCardBoard(cards, size);
 	RandomIndex(cards, size, indexRow1, indexCol1);
 	this_thread::sleep_for(chrono::seconds(1));
+
+	result.card_turns_pc++;
 
 	system("cls");
 	cards[indexRow1 - 1][indexCol1 - 1] = symbols[indexRow1 - 1][indexCol1 - 1];
@@ -335,11 +388,14 @@ void ComputerMove(char** cards, char** symbols, int size, bool& isMatch)
 	cards[indexRow2 - 1][indexCol2 - 1] = symbols[indexRow2 - 1][indexCol2 - 1];
 	ShowCardBoard(cards, size);
 
+	result.card_turns_pc++;
+
 	if (cards[indexRow1 - 1][indexCol1 - 1] == cards[indexRow2 - 1][indexCol2 - 1])
 	{
 		cards[indexRow1 - 1][indexCol1 - 1] = ' ';
 		cards[indexRow2 - 1][indexCol2 - 1] = ' ';
 		isMatch = 1;
+		result.matches_number_pc++;
 	}
 	else
 	{
@@ -354,37 +410,40 @@ void ComputerMove(char** cards, char** symbols, int size, bool& isMatch)
 }
 
 //старт игры с одним игроком
-void StartOnePlayerGame(char** cards, char** symbols, int size)
+void StartOnePlayerGame(char** cards, char** symbols, int size, Achievements& result)
 {
 	bool isMatch = 0;
 	do
 	{
-		PlayerMove(cards, symbols, size, isMatch);
+		PlayerMove(cards, symbols, size, isMatch, result);
 	} while (IsEndOfGame(cards, size) == 0);
 }
 
 //старт игры комп/игрок
-void StartTwoPlayerGame(char** cards, char** symbols, int size)
+void StartTwoPlayerGame(char** cards, char** symbols, int size, Achievements& result)
 {
 	bool isMatch = 0;
 	do
 	{
 		do
 		{
-			PlayerMove(cards, symbols, size, isMatch);
+			PlayerMove(cards, symbols, size, isMatch, result);
 			if (IsEndOfGame(cards, size) == 1) isMatch = 0;
 		} while (isMatch);
 		if (IsEndOfGame(cards, size) != 1)
 		{
 			do
 			{
-				ComputerMove(cards, symbols, size, isMatch);
+				ComputerMove(cards, symbols, size, isMatch, result);
 				if (IsEndOfGame(cards, size) == 1) isMatch = 0;
 			} while (isMatch);
 		}
 
 	} while (IsEndOfGame(cards, size) == 0);
 
+	if (result.matches_number_pl > result.matches_number_pc)result.result = 1;
+	else if (result.matches_number_pl < result.matches_number_pc)result.result = 0;
+	else { result.result = 0; }
 }
 
 //старт игры
@@ -424,12 +483,13 @@ void StartGame(int& counter)
 
 	if (*number_of_players == 1)
 	{
-		StartOnePlayerGame(cards, symbols, size);
+		StartOnePlayerGame(cards, symbols, size, current_game);
 		current_game.game_mode = 1;
+		current_game.result = 1;
 	}
 	else if (*number_of_players == 2)
 	{
-		StartTwoPlayerGame(cards, symbols, size);
+		StartTwoPlayerGame(cards, symbols, size, current_game);
 		current_game.game_mode = 2;
 	}
 
@@ -462,7 +522,7 @@ void Menu(int& counter)
 	do
 	{
 		cout << "Enter your choice: ";
-		cin >> choice;
+		getValidatedInput(choice);
 	} while (choice < 1 || choice >3);
 
 	system("cls");

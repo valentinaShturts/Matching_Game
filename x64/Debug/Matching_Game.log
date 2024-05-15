@@ -1,3 +1,3 @@
 ﻿  Matching_Game.cpp
-C:\Users\Valentina\source\repos\Matching_Game\Matching_Game\Matching_Game.cpp(101,18): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Valentina\source\repos\Matching_Game\Matching_Game\Matching_Game.cpp(127,18): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   Matching_Game.vcxproj -> C:\Users\Valentina\source\repos\Matching_Game\x64\Debug\Matching_Game.exe

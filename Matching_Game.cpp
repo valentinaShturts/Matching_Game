@@ -1,4 +1,7 @@
-﻿#include <iostream>
+﻿
+#include <windows.h>
+#include <mmsystem.h>
+#include <iostream>
 #include <ctime>
 #include <cstdlib>
 #include <random>
@@ -9,14 +12,14 @@
 #include <string>
 #include <limits> // Для использования std::numeric_limits
 
-#include <windows.h>
+
 #ifdef max
 #undef max
 #endif
 
 using namespace std;
 using namespace std::chrono;
-
+#pragma comment(lib, "winmm.lib")
 
 
 void getValidatedInput(int& input)
@@ -44,6 +47,7 @@ void ChooseGameMode(int* number_of_players)
 {
 	cout << "  Choose the number of players(1 or 2): ";
 	getValidatedInput(*number_of_players);
+	PlaySound(TEXT("choice.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	if (*number_of_players == 1) cout << "    Here the rules: " << endl << " This is a simple memory game." << endl << " You need to turn over 2 cards, if they match, you're cool." << endl << " If not, don't despair and keep playing." << endl << " The game is over when there are no more cards on the field." << endl << " Good luck!" << endl;
 	else if (*number_of_players == 2) cout << "    Here the rules: " << endl << " This is a simple memory game." << endl << " You will play with the computer. " << endl << " You need to turn over 2 cards, if they match, you're cool and continue to play." << endl << " If not, don't despair, but it's the computer's move." << endl << " The game is over when there are no more cards on the field." << endl << " The one with the most matches wins. " << endl << " Good luck!" << endl;
 	else { ChooseGameMode(number_of_players); }
@@ -54,7 +58,8 @@ void ChooseSizeBoard(int* size)
 {
 	cout << "Enter size of the board (2, 4, 6, 8): ";
 	getValidatedInput(*size);
-	if (*size < 2 || *size >8 || *size % 2 != 0)  ChooseSizeBoard(size); 
+	PlaySound(TEXT("choice.wav"), NULL, SND_FILENAME | SND_ASYNC);
+	if (*size < 2 || *size >8 || *size % 2 != 0)  ChooseSizeBoard(size);
 }
 //расспечатать карточки
 void ShowCardBoard(char** cards, int size)
@@ -185,16 +190,16 @@ struct Achievements
 void WriteGameResultToFile(const Achievements& result)
 {
 	ofstream file("game_results.txt", ios::app); // Открытие файла для записи (добавление в конец файла)
-	if (file.is_open()) 
+	if (file.is_open())
 	{
 		file << result.id;
 		file << " ";
-		if (result.game_mode == 1) file <<  " Single-user " ;
-		else if (result.game_mode == 2) file <<  " Computer/Player ";
+		if (result.game_mode == 1) file << " Single-user ";
+		else if (result.game_mode == 2) file << " Computer/Player ";
 		file << " ";
-		file  << result.size_board <<"x"<< result.size_board;
+		file << result.size_board << "x" << result.size_board;
 		file << " ";
-		file <<  result.min_duration << "." << result.sec_duration;
+		file << result.min_duration << "." << result.sec_duration;
 		file << " ";
 		file << (result.result ? " Winner " : " Loser ") << endl;
 		file << endl;
@@ -205,7 +210,7 @@ void WriteGameResultToFile(const Achievements& result)
 	}
 }
 
-void ViewGameResultsFromFile() 
+void ViewGameResultsFromFile()
 {
 	cout << " ID \t Game mode \t Board size \t Elapsed time \t    Result" << endl << endl;
 	ifstream file("game_results.txt"); // Открытие файла для чтения
@@ -214,7 +219,7 @@ void ViewGameResultsFromFile()
 		string id, game_mode, board_size, elapsed_time, result;
 		while (file >> id >> game_mode >> board_size >> elapsed_time >> result)
 		{
-			cout <<" " << id << "    " << game_mode << "\t    " << board_size << "\t\t    " << elapsed_time << "\t    " << result << endl;
+			cout << " " << id << "    " << game_mode << "\t    " << board_size << "\t\t    " << elapsed_time << "\t    " << result << endl;
 		}
 		file.close();
 	}
@@ -225,7 +230,7 @@ void ViewGameResultsFromFile()
 }
 
 
-void ClearFileContents(const string& filename) 
+void ClearFileContents(const string& filename)
 {
 	ofstream file(filename); // Открытие файла для записи (это удалит его содержимое)
 	file.close();
@@ -236,23 +241,26 @@ void PrintResults(Achievements& result)
 {
 	if (result.game_mode == 2)
 	{
-		if (result.result == 1) 
+		if (result.result == 1)
 		{
-			//PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_SYNC | SND_FILENAME);
+			PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_FILENAME | SND_ASYNC);
 			cout << "\tCongratulations!! You won!" << endl << endl;
 		}
-		else { cout << "\tOh..sorry. You lose)" << endl << endl; }
+		else { PlaySound(TEXT("congratulations.wav"), NULL, SND_FILENAME | SND_ASYNC); cout << "\tCongratulations!! You are a failure!" << endl << endl; /*Sleep(5000);  PlaySound(TEXT("emotional-damage-meme.wav"), NULL, SND_FILENAME | SND_ASYNC)*/;
+		}
 		cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
 		cout << "Number of matches (You): " << result.matches_number_pl << "\t" << "(Computer): " << result.matches_number_pc << endl;
 		cout << "Card turns (You): " << result.card_turns_pl << "\t" << "(Computer): " << result.card_turns_pc << endl << endl;
 	}
 	else if (result.game_mode == 1)
 	{
+		PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		cout << "\tWow, you won, I was already starting to doubt" << endl << endl;
 		cout << "Elapsed time: " << result.min_duration << "." << result.sec_duration << " min" << endl << endl;
 		cout << "Number of matches (You): " << result.matches_number_pl << endl;
 		cout << "Card turns (You): " << result.card_turns_pl << endl << endl;
 	}
+
 }
 
 #pragma endregion
@@ -260,7 +268,7 @@ void PrintResults(Achievements& result)
 //ожидание нажатия пробела
 void WaitForSpacebar()
 {
-	std::cout <<endl<< "Enter Space to continue... ";
+	std::cout << endl << "Enter Space to continue... ";
 	while (_getch() != ' '); // Ожидаем нажатия клавиши пробела
 }
 
@@ -349,6 +357,7 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch, Achieveme
 
 	if (cards[indexRow1 - 1][indexCol1 - 1] == cards[indexRow2 - 1][indexCol2 - 1])
 	{
+		PlaySound(TEXT("duolingo-correct.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		cards[indexRow1 - 1][indexCol1 - 1] = ' ';
 		cards[indexRow2 - 1][indexCol2 - 1] = ' ';
 		isMatch = 1;
@@ -356,6 +365,7 @@ void PlayerMove(char** cards, char** symbols, int size, bool& isMatch, Achieveme
 	}
 	else
 	{
+		PlaySound(TEXT("windows-xp-critical-error.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		cards[indexRow1 - 1][indexCol1 - 1] = (char)219;
 		cards[indexRow2 - 1][indexCol2 - 1] = (char)219;
 		isMatch = 0;
@@ -392,6 +402,7 @@ void ComputerMove(char** cards, char** symbols, int size, bool& isMatch, Achieve
 
 	if (cards[indexRow1 - 1][indexCol1 - 1] == cards[indexRow2 - 1][indexCol2 - 1])
 	{
+		PlaySound(TEXT("duolingo-correct.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		cards[indexRow1 - 1][indexCol1 - 1] = ' ';
 		cards[indexRow2 - 1][indexCol2 - 1] = ' ';
 		isMatch = 1;
@@ -399,6 +410,7 @@ void ComputerMove(char** cards, char** symbols, int size, bool& isMatch, Achieve
 	}
 	else
 	{
+		PlaySound(TEXT("windows-xp-critical-error.wav"), NULL, SND_FILENAME | SND_ASYNC);
 		cards[indexRow1 - 1][indexCol1 - 1] = (char)219;
 		cards[indexRow2 - 1][indexCol2 - 1] = (char)219;
 		isMatch = 0;
@@ -507,15 +519,18 @@ void StartGame(int& counter)
 	DeleteSymbolsArr(symbols, size);
 	system("cls");
 
-	
+
 
 	PrintResults(current_game);
+
 	WaitForSpacebar();
+	PlaySound(NULL, 0, 0);
 }
 
 //меню
 void Menu(int& counter)
 {
+	PlaySound(TEXT("hi.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	cout << "    Welcome to the Matching Game!" << endl << endl;
 	cout << "\t1. Start game" << endl << "\t2. View achievements" << endl << "\t3. Exit" << endl << endl;
 	int choice;
@@ -523,6 +538,7 @@ void Menu(int& counter)
 	{
 		cout << "Enter your choice: ";
 		getValidatedInput(choice);
+		PlaySound(TEXT("choice.wav"), NULL, SND_FILENAME | SND_ASYNC);
 	} while (choice < 1 || choice >3);
 
 	system("cls");
@@ -530,7 +546,7 @@ void Menu(int& counter)
 	if (choice == 1)
 	{
 		counter++;
-		StartGame( counter);
+		StartGame(counter);
 	}
 
 	else if (choice == 2)
@@ -550,6 +566,8 @@ void Menu(int& counter)
 
 int main()
 {
+	//PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_FILENAME | SND_ASYNC);
+
 	ClearFileContents("game_results.txt");
 
 	int counter = 0;
@@ -559,6 +577,6 @@ int main()
 		Menu(counter);
 	} while (true);
 
-	
+
 	return 0;
 }

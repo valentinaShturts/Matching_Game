@@ -8,8 +8,8 @@
 #include <chrono>
 #include <conio.h> // Для использования _kbhit() и _getch()
 #include <thread>
-#include <fstream>
-#include <string>
+//#include <fstream>
+//#include <string>
 #include <limits> // Для использования std::numeric_limits
 
 
@@ -19,6 +19,7 @@
 
 using namespace std;
 using namespace std::chrono;
+#pragma warning(disable : 4996)
 #pragma comment(lib, "winmm.lib")
 
 
@@ -189,21 +190,17 @@ struct Achievements
 
 void WriteGameResultToFile(const Achievements& result)
 {
-	ofstream file("game_results.txt", ios::app); // Открытие файла для записи (добавление в конец файла)
-	if (file.is_open())
+	FILE* file = fopen("game_results.txt", "a"); // Открытие файла для записи (добавление в конец файла)
+	if (file != nullptr)
 	{
-		file << result.id;
-		file << " ";
-		if (result.game_mode == 1) file << " Single-user ";
-		else if (result.game_mode == 2) file << " Computer/Player ";
-		file << " ";
-		file << result.size_board << "x" << result.size_board;
-		file << " ";
-		file << result.min_duration << "." << result.sec_duration;
-		file << " ";
-		file << (result.result ? " Winner " : " Loser ") << endl;
-		file << endl;
-		file.close();
+		fprintf(file, "%d ", result.id);
+		if (result.game_mode == 1) fprintf(file, " Single-user     ");
+		else if (result.game_mode == 2) fprintf(file, " Computer/Player ");
+		fprintf(file, " %dx%d ", result.size_board, result.size_board);
+		fprintf(file, " %d.%d ", result.min_duration, result.sec_duration);
+		fprintf(file, result.result ? " Winner " : " Loser ");
+		fputc('\n', file);
+		fclose(file);
 	}
 	else {
 		cout << "Error: Unable to open file for writing." << endl;
@@ -213,15 +210,15 @@ void WriteGameResultToFile(const Achievements& result)
 void ViewGameResultsFromFile()
 {
 	cout << " ID \t Game mode \t Board size \t Elapsed time \t    Result" << endl << endl;
-	ifstream file("game_results.txt"); // Открытие файла для чтения
-	if (file.is_open())
+	FILE* file = fopen("game_results.txt", "r"); // Открытие файла для чтения
+	if (file != nullptr)
 	{
-		string id, game_mode, board_size, elapsed_time, result;
-		while (file >> id >> game_mode >> board_size >> elapsed_time >> result)
+		char id[50], game_mode[50], board_size[50], elapsed_time[50], result[50];
+		while (fscanf(file, "%49s %49s %49s %49s %49s", id, game_mode, board_size, elapsed_time, result) == 5)
 		{
-			cout << " " << id << "    " << game_mode << "\t    " << board_size << "\t\t    " << elapsed_time << "\t    " << result << endl;
+			std::cout << " " << id << "    " << game_mode << "\t    " << board_size << "\t\t    " << elapsed_time << "\t    " << result << std::endl;
 		}
-		file.close();
+		fclose(file);
 	}
 	else
 	{
@@ -232,8 +229,15 @@ void ViewGameResultsFromFile()
 
 void ClearFileContents(const string& filename)
 {
-	ofstream file(filename); // Открытие файла для записи (это удалит его содержимое)
-	file.close();
+	FILE* file = fopen("game_results.txt", "w"); // Открытие файла для чтения
+	if (file != nullptr) // Открытие файла для записи (это удалит его содержимое)
+	{
+		fclose(file);
+	}
+	else
+	{
+		cout << "Error: Unable to open file." << endl;
+	}
 }
 
 //вывод результатов после окончания игры
@@ -566,7 +570,6 @@ void Menu(int& counter)
 
 int main()
 {
-	//PlaySound(TEXT("fnaf-kids-cheering.wav"), NULL, SND_FILENAME | SND_ASYNC);
 
 	ClearFileContents("game_results.txt");
 

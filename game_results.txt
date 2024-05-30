@@ -1,2 +1,2 @@
-1  Single-user      2x2  0.11  Winner 
-2  Computer/Player  2x2  0.16  Loser 
+1  Computer/Player  2x2  0.8  Winner 
+2  Computer/Player  2x2  0.39  Winner 

@@ -131,6 +131,11 @@
   <ItemGroup>
     <ClCompile Include="Matching_Game.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Achievments.h" />
+    <ClInclude Include="cards.h" />
+    <ClInclude Include="Start_Game.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
